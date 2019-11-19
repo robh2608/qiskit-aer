@@ -41,6 +41,9 @@ enum class OpType {
 
 inline std::ostream& operator<<(std::ostream& stream, const OpType& type) {
   switch (type) {
+  case OpType::initialize_stabilizer;
+    stream << "initialize_stabilizer";
+    break;
   case OpType::gate:
     stream << "gate";
     break;
@@ -582,6 +585,9 @@ Op json_to_op(const json_t &js) {
   // load operation identifier
   std::string name;
   JSON::get_value(name, "name", js);
+  // Initialize Stabiliser
+  if (name == "initialize_stabilizer")
+    return json_to_op_initialize_stabilizer(js);
   // Barrier
   if (name == "barrier")
     return json_to_op_barrier(js);
@@ -863,6 +869,20 @@ Op json_to_op_unitary(const json_t &js) {
   // Conditional
   add_condtional(Allowed::Yes, op, js);
   return op;
+}
+
+//----------------------------------------------------------------
+//This is our new function //
+//----------------------------------------------------------------
+
+Op json_to_op_initialize_stabilizer(const json_t &js){
+
+ Op op;
+ op.name = "initialize_stabilizer";
+ JSON::get_value(op.qubits, "qubits", js);
+ std::vector<std::vector<std::string>> tmp = js["params"];
+ op.string_params = tmp[0];
+
 }
 
 Op json_to_op_superop(const json_t &js) {
