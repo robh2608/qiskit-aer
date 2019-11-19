@@ -36,12 +36,12 @@ enum class RegComparison {Equal, NotEqual, Less, LessEqual, Greater, GreaterEqua
 // Enum class for operation types
 enum class OpType {
   gate, measure, reset, bfunc, barrier, snapshot,
-  matrix, multiplexer, kraus, superop, roerror, noise_switch, initialize
+  matrix, multiplexer, kraus, superop, roerror, noise_switch, initialize, initialize_stabilizer
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const OpType& type) {
   switch (type) {
-  case OpType::initialize_stabilizer;
+  case OpType::initialize_stabilizer:
     stream << "initialize_stabilizer";
     break;
   case OpType::gate:
@@ -554,6 +554,7 @@ Op json_to_op_measure(const json_t &js);
 Op json_to_op_reset(const json_t &js);
 Op json_to_op_bfunc(const json_t &js);
 Op json_to_op_initialize(const json_t &js);
+Op json_to_op_initialize_stabilizer(const json_t &js);
 
 // Snapshots
 Op json_to_op_snapshot(const json_t &js);
@@ -878,11 +879,15 @@ Op json_to_op_unitary(const json_t &js) {
 Op json_to_op_initialize_stabilizer(const json_t &js){
 
  Op op;
+ op.type = OpType::initialize_stabilizer;
  op.name = "initialize_stabilizer";
  JSON::get_value(op.qubits, "qubits", js);
- std::vector<std::vector<std::string>> tmp = js["params"];
+ std::vector<std::vector<std::string>> tmp;
+ std::clog << "DEBUG: TMP.size = " << tmp.size() <<std::endl;
+ JSON::get_value(tmp, "params", js);
  op.string_params = tmp[0];
-
+ //std::clog << "DEBUG: string_params = " << op.string_params;
+ return op;
 }
 
 Op json_to_op_superop(const json_t &js) {

@@ -65,7 +65,9 @@ public:
       Operations::OpType::snapshot,
       Operations::OpType::barrier,
       Operations::OpType::bfunc,
-      Operations::OpType::roerror
+      Operations::OpType::roerror,
+      //added by us
+      Operations::OpType::initialize_stabilizer
     });
   }
 
@@ -116,6 +118,9 @@ protected:
   // Applies a sypported Gate operation to the state class.
   // If the input is not in allowed_gates an exeption will be raised.
   void apply_gate(const Operations::Op &op);
+
+  //added by us
+  void apply_initialize_stabilizer(const Operations::Op &op);
 
   // Measure qubits and return a list of outcomes [q0, q1, ...]
   // If a state subclass supports this function it then "measure"
@@ -277,6 +282,10 @@ void State::apply_ops(const std::vector<Operations::Op> &ops,
   for (const auto op: ops) {
     if(BaseState::creg_.check_conditional(op)) {
       switch (op.type) {
+        //added by us
+        case Operations::OpType::initialize_stabilizer:
+          apply_initialize_stabilizer(op);
+          break;
         case Operations::OpType::barrier:
           break;
         case Operations::OpType::reset:
@@ -303,6 +312,31 @@ void State::apply_ops(const std::vector<Operations::Op> &ops,
       }
     }
   }
+}
+
+//added by ys
+void State::apply_initialize_stabilizer(const Operations::Op &op){
+
+  uint_t num_qubits=op.qubits.size();
+  uint_t num_stabs=op.string_params.size();
+
+  uint_t num_generators = num_stabs / 2;
+  std::vector<std::string> stabilizers(num_generators);
+  std::vector<std::string> destabilizers(num_generators);
+  
+  int j;
+  for(j=0;j<num_generators;j++){
+    stabilizers.emplace_back(op.string_params[j]);
+    destabilizers.emplace_back(op.string_params[j+num_generators]);
+  }
+
+  
+  json_t stab_js = json_t::object();
+  stab_js["stabilizers"] = stabilizers;
+  stab_js["destabilizers"] = destabilizers;
+  Clifford::Clifford cliff = stab_js;
+
+  initialize_qreg(num_qubits,cliff);
 }
 
 void State::apply_gate(const Operations::Op &op) {
